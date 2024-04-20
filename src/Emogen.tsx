@@ -7,7 +7,8 @@ function Emogen() {
     const [file, setFile] = useState(null);
     const [fileName, setFileName] = useState(null); // Add this line
     const [showPredict, setShowPredict] = useState(false);
-    // const [predictions, setPredictions] = useState(null);
+    const [predictions, setPredictions] = useState(null);
+    const [postFile, setFileForPost] = useState(null)
 
     const handleClick = () => {
         setShowInput(true);
@@ -17,9 +18,10 @@ function Emogen() {
         const file = event.target.files[0];
         console.log(file);
         setFile(URL.createObjectURL(file));
-        setFileName(file.name); // Add this line
+        setFileName(file.name); 
         setShowInput(false);
         setShowPredict(true);
+        setFileForPost(file)
     };
 
     const handleTitleClick = () => {
@@ -34,12 +36,19 @@ function Emogen() {
     };
 
     const handleGenerate = async () => {
-        // Call your API to get the predictions here
-        // For example:
-        // const response = await fetch('/api/predict', { method: 'POST', body: file });
-        // const predictions = await response.json();
-        // setPredictions(predictions);
-    };
+        const formData = new FormData();
+        formData.append("file", postFile);
+        console.log(formData);
+
+      
+        axios.post("/upload", formData)
+          .then((response) => {
+            setPredictions(response.data);
+          })
+          .catch((error) => {
+            console.error("Error uploading file:", error);
+          });
+      };
 
     return (
         <>
@@ -71,7 +80,7 @@ function Emogen() {
                         </div>
                     </div>
                 }
-                {file &&
+                {file && !predictions &&
                     <div className='transparent-box'>
                         <div className='message1'>
                             File Uploaded Successfully !!!
@@ -89,13 +98,26 @@ function Emogen() {
                     </div>}
             </div>
             <div className='buttoncontainer'>
-                {showPredict &&
+                {showPredict && !predictions &&
                     <>
                         <button className='buttonreupload' onClick={handleReupload}>RE-UPLOAD</button>&nbsp;&nbsp;&nbsp;
                         <button className='buttongenerate' onClick={handleGenerate}>GENERATE</button>
                     </>
                 }
             </div>
+            {predictions &&
+                <div className='transparent-box'>
+                    <div>Predicted Gender: {predictions.genderPrediction[0].predictedGender}</div>
+                     <div>Confidence Scores:</div>
+                    <ul>
+                        <li>Male: {predictions.genderPrediction[0].confidenceScores.Male}</li>
+                        <li>Female: {predictions.genderPrediction[0].confidenceScores.Female}</li>
+                        <li>Predicted Emotion: {predictions.emotionPrediction.predictedEmotion}</li>
+                        <li>Confidence Score: {predictions.emotionPrediction.confidenceScore}</li>
+                    </ul>
+                </div>
+
+            }
         </>
     );
 }
